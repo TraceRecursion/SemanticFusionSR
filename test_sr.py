@@ -5,12 +5,13 @@ from model import SemanticFusionSR
 from utils import calculate_psnr, calculate_ssim
 from tqdm import tqdm
 import time
+from config import VAL_IMG_DIR, VAL_ANN_FILE
 
 def test_sr(model_path):
     # 数据集
     val_dataset = CocoStuffSRDataset(
-        img_dir="/Users/sydg/Documents/数据集/COCO-Stuff/val2017",
-        ann_file="/Users/sydg/Documents/数据集/COCO-Stuff/stuff_trainval2017/stuff_val2017.json"
+        img_dir=VAL_IMG_DIR,
+        ann_file=VAL_ANN_FILE
     )
     val_loader = DataLoader(val_dataset, batch_size=1, shuffle=False, num_workers=4)  # batch_size=1 以精确评估
     

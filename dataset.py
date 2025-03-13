@@ -5,6 +5,7 @@ from PIL import Image
 import torchvision.transforms as transforms
 import json
 import numpy as np
+from config import TRAIN_IMG_DIR, VAL_IMG_DIR, TRAIN_ANN_FILE, VAL_ANN_FILE
 
 class CocoStuffSRDataset(Dataset):
     def __init__(self, img_dir, ann_file, scale_factor=4, img_size=(512, 512)):
@@ -46,7 +47,7 @@ class CocoStuffSRDataset(Dataset):
 # 示例用法
 if __name__ == "__main__":
     train_dataset = CocoStuffSRDataset(
-        img_dir="/Users/sydg/Documents/数据集/COCO-Stuff/train2017",
-        ann_file="/Users/sydg/Documents/数据集/COCO-Stuff/stuff_trainval2017/stuff_train2017.json"
+        img_dir=TRAIN_IMG_DIR,
+        ann_file=TRAIN_ANN_FILE
     )
     print(f"Dataset size: {len(train_dataset)}")

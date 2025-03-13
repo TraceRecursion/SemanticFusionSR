@@ -7,16 +7,17 @@ from torch.cuda.amp import GradScaler, autocast
 from tqdm import tqdm
 import os
 import time
+from config import TRAIN_IMG_DIR, VAL_IMG_DIR, TRAIN_ANN_FILE, VAL_ANN_FILE
 
 def train():
-    # 数据集路径
+    # 数据集
     train_dataset = CocoStuffSRDataset(
-        img_dir="/Users/sydg/Documents/数据集/COCO-Stuff/train2017",
-        ann_file="/Users/sydg/Documents/数据集/COCO-Stuff/stuff_trainval2017/stuff_train2017.json"
+        img_dir=TRAIN_IMG_DIR,
+        ann_file=TRAIN_ANN_FILE
     )
     val_dataset = CocoStuffSRDataset(
-        img_dir="/Users/sydg/Documents/数据集/COCO-Stuff/val2017",
-        ann_file="/Users/sydg/Documents/数据集/COCO-Stuff/stuff_trainval2017/stuff_val2017.json"
+        img_dir=VAL_IMG_DIR,
+        ann_file=VAL_ANN_FILE
     )
     
     train_loader = DataLoader(train_dataset, batch_size=13, shuffle=True, num_workers=4)

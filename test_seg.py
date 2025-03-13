@@ -9,6 +9,7 @@ import time
 import numpy as np
 import os
 import json
+from config import VAL_IMG_DIR, VAL_MASK_DIR, VAL_ANN_FILE
 
 class CocoStuffSegDataset(Dataset):
     def __init__(self, img_dir, mask_dir, ann_file, img_size=(512, 512)):
@@ -71,9 +72,9 @@ def calculate_iou(pred, target, num_classes):
 def test_seg(token=None):
     # 数据集
     val_dataset = CocoStuffSegDataset(
-        img_dir="/Users/sydg/Documents/数据集/COCO-Stuff/val2017",
-        mask_dir="/Users/sydg/Documents/数据集/COCO-Stuff/stuffthingmaps_trainval2017/val2017",
-        ann_file="/Users/sydg/Documents/数据集/COCO-Stuff/stuff_trainval2017/stuff_val2017.json"
+        img_dir=VAL_IMG_DIR,
+        mask_dir=VAL_MASK_DIR,
+        ann_file=VAL_ANN_FILE
     )
     val_loader = DataLoader(val_dataset, batch_size=1, shuffle=False, num_workers=4)
     
@@ -81,7 +82,7 @@ def test_seg(token=None):
     device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
     model = SegformerForSemanticSegmentation.from_pretrained(
         "nvidia/segformer-b5-finetuned-ade-640-640",
-        token=token  # 如果需要认证，传入你的 Hugging Face token
+        token=token
     ).to(device)
     model.eval()
     
@@ -116,7 +117,4 @@ def test_seg(token=None):
             print(f"Class {cls} IoU: {iou:.4f}")
 
 if __name__ == "__main__":
-    # 如果需要 token，取消注释并填入你的 Hugging Face token
-    # hf_token = "your_hugging_face_token_here"
-    # test_seg(token=hf_token)
-    test_seg()  # 不需要 token 时直接运行
+    test_seg()
