@@ -1,3 +1,4 @@
+import os
 import torch
 from torch.utils.data import DataLoader
 from transformers import SegformerForSemanticSegmentation, SegformerConfig
@@ -5,7 +6,6 @@ import torch.nn as nn
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 import time
-import os
 import numpy as np
 from dataset import CocoStuffSegDataset
 from config import TRAIN_IMG_DIR, VAL_IMG_DIR, TRAIN_MASK_DIR, VAL_MASK_DIR, TRAIN_ANN_FILE, VAL_ANN_FILE
@@ -28,24 +28,24 @@ def calculate_iou(pred, target, num_classes):
 
 
 def train_seg():
-    # 数据集
-    train_dataset = CocoStuffSegDataset(TRAIN_IMG_DIR, TRAIN_MASK_DIR, TRAIN_ANN_FILE)
-    val_dataset = CocoStuffSegDataset(VAL_IMG_DIR, VAL_MASK_DIR, VAL_ANN_FILE)
+    # 数据集（抽样）
+    train_dataset = CocoStuffSegDataset(TRAIN_IMG_DIR, TRAIN_MASK_DIR, TRAIN_ANN_FILE, sample_fraction=0.1)
+    val_dataset = CocoStuffSegDataset(VAL_IMG_DIR, VAL_MASK_DIR, VAL_ANN_FILE, sample_fraction=0.2)
 
-    train_loader = DataLoader(train_dataset, batch_size=6, shuffle=True, num_workers=8)
-    val_loader = DataLoader(val_dataset, batch_size=6, shuffle=False, num_workers=8)
+    train_loader = DataLoader(train_dataset, batch_size=20, shuffle=True, num_workers=12)
+    val_loader = DataLoader(val_dataset, batch_size=20, shuffle=False, num_workers=12)
 
-    # 模型
+    # 模型（SegFormer-B0）
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    config = SegformerConfig.from_pretrained("nvidia/mit-b5", num_labels=182)
+    config = SegformerConfig.from_pretrained("nvidia/mit-b0", num_labels=182)
     model = SegformerForSemanticSegmentation(config=config).to(device)
 
     # 优化器和损失函数
     optimizer = torch.optim.AdamW(model.parameters(), lr=0.00006)
-    criterion = nn.CrossEntropyLoss(ignore_index=255)  # 忽略无效类别
+    criterion = nn.CrossEntropyLoss(ignore_index=255)
 
     # TensorBoard
-    writer = SummaryWriter(log_dir="runs/segformer_b5_coco_stuff")
+    writer = SummaryWriter(log_dir="runs/segformer_b0_coco_stuff")
 
     # 训练参数
     num_epochs = 10
@@ -62,7 +62,7 @@ def train_seg():
                 img, mask = img.to(device), mask.to(device)
                 optimizer.zero_grad()
 
-                outputs = model(img).logits  # [B, 182, H/4, W/4]
+                outputs = model(img).logits
                 outputs = nn.functional.interpolate(outputs, size=mask.shape[-2:], mode='bilinear', align_corners=False)
                 loss = criterion(outputs, mask)
 
@@ -100,7 +100,7 @@ def train_seg():
         class_ious = [np.mean(ious) if ious else float('nan') for ious in all_ious]
         miou = np.nanmean(class_ious)
 
-        # 记录到 TensorBoard
+        # TensorBoard 记录
         writer.add_scalar("Loss/Train", train_loss, epoch)
         writer.add_scalar("Loss/Val", val_loss, epoch)
         writer.add_scalar("mIoU/Val", miou, epoch)
@@ -113,7 +113,7 @@ def train_seg():
         print(f"Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}, Val mIoU: {miou:.4f}")
 
         # 保存模型
-        torch.save(model.state_dict(), f"checkpoints/segformer_b5_epoch_{epoch + 1}.pth")
+        torch.save(model.state_dict(), f"checkpoints/segformer_b0_epoch_{epoch + 1}.pth")
 
     writer.close()
 
