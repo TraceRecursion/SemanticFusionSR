@@ -19,21 +19,21 @@ class CBAM(nn.Module):
         )
 
     def forward(self, x):
-        # Channel attention
         ca = self.channel_attention(x)
         x = x * ca
-        # Spatial attention
         sa = self.spatial_attention(torch.cat([x.mean(1, keepdim=True), x.max(1, keepdim=True)[0]], dim=1))
         x = x * sa
         return x
 
 class SemanticFusionSR(nn.Module):
-    def __init__(self, num_classes=182, scale_factor=4):  # COCO-Stuff 有 182 类
+    def __init__(self, num_classes=182, scale_factor=4, token=None):
         super(SemanticFusionSR, self).__init__()
         self.scale_factor = scale_factor
         
-        # 语义特征提取：SegFormer-B5
-        self.segformer = SegformerForSemanticSegmentation.from_pretrained("nvidia/segformer-b5-finetuned-coco-stuff-640-1280")
+        self.segformer = SegformerForSemanticSegmentation.from_pretrained(
+            "nvidia/segformer-b5-finetuned-ade-640-640",
+            token=token
+        )
         self.embedding = nn.Conv2d(num_classes, 64, 1)  # 将语义分割结果转为 64 维特征
         
         # 低级特征提取：简化的 ResNet-like 编码器
